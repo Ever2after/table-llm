@@ -1,0 +1,16 @@
+fire
+fuzzywuzzy
+numpy
+openai==0.28
+pandas
+tiktoken
+torch
+tqdm
+transformers
+timeout-decorator
+tabulate
+# unicodedata
+# re
+# ast
+# csv
+# dateutil
