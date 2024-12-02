@@ -3,7 +3,6 @@
 .git
 
 # input and output directories
-/data*
 /output*
 /results*
 
