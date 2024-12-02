@@ -46,7 +46,9 @@ class TableAgent:
             from prompt.wtq.agent import agent_prefix, agent_prefix_with_omitted_rows_guideline
         elif prompt_type == "tabfact":
             from prompt.tabfact.agent import agent_prefix, agent_prefix_with_omitted_rows_guideline
-        
+        else:
+            from prompt.wtq.agent import agent_prefix, agent_prefix_with_omitted_rows_guideline
+            
         self.agent_prefix = agent_prefix
         self.agent_prefix_with_omitted_rows_guideline = agent_prefix_with_omitted_rows_guideline
 
