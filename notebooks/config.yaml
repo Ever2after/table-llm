@@ -1,0 +1,10 @@
+date_format: 'dd MMMM yyyy'
+num_word: true
+ordinal: true
+symbol: true
+unit:
+  '[length]': 'cm'
+  '[mass]': 'kg'
+  '[time]': 's'
+  '[temperature]': 'K'
+scientific: false
