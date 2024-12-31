@@ -1,6 +1,6 @@
 date_format: 'dd MMMM yyyy'
 num_word: true
-ordinal: true
+ordinal: false
 symbol: true
 unit:
   '[length]': 'cm'
