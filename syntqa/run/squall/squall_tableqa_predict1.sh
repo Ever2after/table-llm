@@ -11,7 +11,6 @@ python ./run.py \
   --squall_plus True \
   --predict_split test \
   --output_dir ${output_dir} \
-  --resume_from_checkpoint ${output_dir}/checkpoint-${checkpoint} \
   --model_name_or_path ${model_name} \
   --max_source_length 1024 \
   --max_target_length 128 \
@@ -23,5 +22,6 @@ python ./run.py \
   --num_beams 5 \
   --input_noise 1
 
+# --resume_from_checkpoint ${output_dir}/checkpoint-${checkpoint} \
 # --max_predict_samples 100
 # --aug True 

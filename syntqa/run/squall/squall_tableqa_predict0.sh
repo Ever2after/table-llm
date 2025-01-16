@@ -21,7 +21,7 @@ python ./run.py \
   --split_id 0 \
   --predict_with_generate \
   --num_beams 5 \
-  --input_noise True
+  --input_noise 0
   
 # --aug True 
 # --max_predict_samples 500
