@@ -1,5 +1,6 @@
 from collections import Counter
 from utils.eval import eval_ex_match, extract_answer
+from utils.custom_eval import check_match
 import random
 import json
 import numpy as np
@@ -118,7 +119,8 @@ def eval_wtq(checkpoints:Union[List, Tuple, str], elements_per_checkpoint:Union[
             pred_count = Counter(preds)
             pred, _ = pred_count.most_common(1)[0]
 
-            if eval_ex_match(answer, pred):
+            # if eval_ex_match(answer, pred):
+            if check_match(pred, answer):
                 acc += 1
             total += 1
 

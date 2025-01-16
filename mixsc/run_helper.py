@@ -52,7 +52,11 @@ def get_cot_prompt(dataset_name):
         return cot_prompt
     
     else:
-        raise ValueError(f"Dataset {dataset_name} is not supported.")
+        from prompt.wtq.cot import cot_prompt
+        return cot_prompt
+    
+    # else:
+    #     raise ValueError(f"Dataset {dataset_name} is not supported.")
 
     
 

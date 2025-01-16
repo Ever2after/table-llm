@@ -20,12 +20,15 @@ class WikiTQDataset:
         row = self.dataset.iloc[index]
         table = pd.DataFrame(row.table['rows'], columns=row.table['header'])
         question = row['question']
-        answer = ', '.join(row['answers'])
+        answer = row['answers']
+        question_id = row['id']
 
         return {
             "table": table,
+            "table_id": row.table['name'],
             "question": question,
-            "answer": answer
+            "answer": answer,
+            "question_id": question_id
         }
 
     def __len__(self):

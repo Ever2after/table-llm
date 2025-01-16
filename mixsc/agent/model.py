@@ -1,4 +1,4 @@
-import openai
+from openai import OpenAI
 import os
 import time
 import tiktoken
@@ -21,11 +21,11 @@ class Model:
             if API_KEY is None:
                 raise ValueError("OPENAI_API_KEY not set, please run `export OPENAI_API_KEY=<your key>` to ser it")
             else:
-                openai.api_key = API_KEY
+                self.openai = OpenAI(api_key=API_KEY)
                 
         elif provider == "vllm":
             from vllm import LLM
-            self.model = LLM(model_name, gpu_memory_utilization=0.9)
+            self.model = LLM(model_name, gpu_memory_utilization=0.7, dtype="float16", max_model_len=1024)
             self.tokenizer = self.model.get_tokenizer()
 
 
@@ -41,7 +41,7 @@ class Model:
 
     @timeout_decorator.timeout(60, timeout_exception=StopIteration)
     def query_with_timeout(self, messages, **kwargs):
-        return openai.ChatCompletion.create(
+        return self.openai.chat.completions.create(
             model=self.model_name,
             messages=messages,
             **kwargs
@@ -67,9 +67,9 @@ class Model:
                     time.sleep(60 / rate_limit_per_minute - 0.5)  # Buffer of 0.5 seconds
 
                 if kwargs.get('n', 1) == 1:
-                    return response.choices[0].message['content'], response
+                    return response.choices[0].message.content, response
                 else:
-                    return [choice.message['content'] for choice in response.choices], response
+                    return [choice.message.content for choice in response.choices], response
                 
             except StopIteration:
                 print("Query timed out, retrying...")
@@ -101,7 +101,8 @@ class Model:
             max_tokens=256,
             temperature=kwargs.get("temperature", 0.8),
             stop=kwargs.get("stop", []),
-            top_p=kwargs.get("top_p", 1.0) if kwargs.get("temperature", 0.8) != 0 else 1.0
+            top_p=kwargs.get("top_p", 1.0) if kwargs.get("temperature", 0.8) != 0 else 1.0,
+
         )
         
         prompts = [

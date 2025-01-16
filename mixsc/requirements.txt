@@ -1,7 +1,7 @@
 fire
 fuzzywuzzy
 numpy
-openai==0.28
+openai
 pandas
 tiktoken
 torch

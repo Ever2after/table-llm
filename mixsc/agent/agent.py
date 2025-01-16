@@ -8,11 +8,11 @@ from utils.execute import markdown_to_df, parse_code_from_string, python_repl_as
 import pandas as pd
 import numpy as np
 from datetime import datetime
-
+from typing import Union
 
 class TableAgent:
     def __init__(self, 
-                 table: pd.DataFrame | str,
+                 table: Union[pd.DataFrame, str],
                  prompt_type: str,
                  model: Optional[Model],
                  long_model: Optional[Model],

@@ -2,7 +2,6 @@ import pandas as pd
 
 from utils.data_loader import download_and_cache_dataset
 
-
 class TabFactDataset:
     def __init__(self, cache_dir='data', split='test'):
         self.cache_dir = cache_dir
@@ -20,13 +19,15 @@ class TabFactDataset:
         
         row = self.dataset.iloc[index]
         table = pd.DataFrame(row.table['rows'], columns=row.table['header'])
-        question = f"Answer whether the following statement is true or false: {row['statement']}"
-        answer = 'true' if row['label'] == 1 else 'false'
+        question = row['statement']
+        answer = 'yes' if row['label'] == 1 else 'no'
 
         return {
             "table": table,
+            "table_id": row.table['id'],
             "question": question,
-            "answer": answer
+            "answer": answer,
+            "question_id": index
         }
 
     def __len__(self):

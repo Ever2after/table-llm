@@ -58,8 +58,8 @@ def main(
     pbar = tqdm(total=stop_at if stop_at < total else total)
 
     # read the results from output/wtq_cot_wo_norm
-    with open("output/wtq_agent_wo_norm/result.jsonl", "r") as f:
-        temp = [json.loads(line) for line in f.readlines()]
+    # with open("output/wtq_agent_wo_norm/result.jsonl", "r") as f:
+    #     temp = [json.loads(line) for line in f.readlines()]
     
     #### start the loop ####
     for table_idx, d in enumerate(data):
@@ -116,17 +116,17 @@ def main(
                 break_flag = True
                 break
 
-            if not transpose_flag:
-                # reuse the temp
-                print(f"Skip {global_i}", flush=True)
-                with open(os.path.join(log_dir, "result.jsonl"), "a") as f:
-                    json.dump(temp[global_i], f)
-                    f.write("\n")
+            # if not transpose_flag:
+            #     # reuse the temp
+            #     print(f"Skip {global_i}", flush=True)
+            #     with open(os.path.join(log_dir, "result.jsonl"), "a") as f:
+            #         json.dump(temp[global_i], f)
+            #         f.write("\n")
                 
-                global_i += 1
-                pbar.update(1)
+            #     global_i += 1
+            #     pbar.update(1)
                 
-                continue
+            #     continue
 
             question = d["questions"][idx]
             answer = d["answers"][idx]

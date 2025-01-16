@@ -12,6 +12,9 @@ def parse_header_checking_result(output):
     match = re.search(r'\(A\)|\(B\)|\(C\)', output)
     
     result = match.group(0) if match else None
+
+    if not result:
+        return False
     
     # if (A) or (C), return False, if (B) return True
     if "B" in result:

@@ -25,8 +25,10 @@ class TabMWPDataset:
 
         return {
             "table": table,
+            "table_id": index,
             "question": question,
-            "answer": answer
+            "answer": answer,
+            "question_id": index
         }
 
     def __len__(self):
