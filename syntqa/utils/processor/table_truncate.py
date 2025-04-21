@@ -24,7 +24,7 @@ class TableTruncate(ABC):
         :param max_input_length: the maximum length of `question` and `table`, i.e., the max position id of a model
         """
         if tokenizer is None:
-            self.tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name_or_path="facebook/bart-large")
+            self.tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name_or_path="Qwen/Qwen2.5-Coder-14B-Instruct")
         else:
             self.tokenizer = tokenizer
         self.max_length = max_input_length
@@ -65,6 +65,8 @@ class CellLimitTruncate(TableTruncate):
         # do not process on these cases
         if isinstance(cell_value, int) or isinstance(cell_value, float):
             return cell_value
+        if cell_value is None:
+            return ""
         if cell_value.strip() != "":
             try_tokens = self.tokenizer.tokenize(cell_value)
             if len(try_tokens) >= self.max_cell_length:

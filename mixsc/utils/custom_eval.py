@@ -30,13 +30,6 @@ def normalize_fraction(text):
         return f"{numerator}/{denominator}"
     return text  # LaTeX 형식이 아니면 원본 반환
 
-def normalize_number(text):
-    """
-    쉼표 제거 및 숫자를 표준화.
-    :param text: str, 입력 텍스트
-    :return: str, 변환된 텍스트
-    """
-    return text.replace(",", "").strip()
 
 def normalize_time_format(text):
     """
@@ -91,78 +84,119 @@ def parse_numeric_value(text):
         pass
 
     # 파싱 실패 시 None 반환
-    return None
+    return text
+
 
 
 def check_match(pred, ans):
     """
     :param pred, ans : 예측값과 정답갑. 이 둘이 일치하는지 여부를 판단할 것이고 판단을 위해 둘의 format을 맞춰주고 체크함
     """
-
-    pred = pred.lower()
-    ans = ans.lower()
-
-    # 포함 비율 계산
-    if pred in ans:
-        return True
-    elif ans in pred:
-        return True
-    else:
-        # 따옴표 제거 후 한 번 더 비교
-        ans_cleaned = ans.replace("'", "")
-        pred_cleaned = pred.replace("'", "")
-        if ans_cleaned in pred_cleaned:
-            return True
-        elif pred_cleaned in ans_cleaned:
+    try:
+        # 문자열을 정수로 변환 시도
+        pred_int = int(pred)
+        ans_int = int(ans)
+        if pred_int == ans_int:
             return True
         else:
-            # 분수 비교 추가
-            ans_fraction = normalize_fraction(ans)
-            pred_fraction = normalize_fraction(pred)
-            if ans_fraction in pred_fraction:
-                return True
-            elif pred_fraction in ans_fraction:
+            return False
+    except:
+        # 여기로 왔다는 것은 pred와 ans가 순수 정수 타입이 아니라는 것
+        # $, %, , 제거한 후에도 숫자 값 비교 추가
+        ans_dollar = ans.replace("$", "").replace(",", "").replace("%", "").strip()
+        pred_dollar = pred.replace("$", "").replace(",", "").replace("%", "").strip()
+        try:
+            pred_int_wo_dollar = int(pred_dollar)
+            ans_int_wo_dollar = int(ans_dollar)
+            if pred_int_wo_dollar == ans_int_wo_dollar:
                 return True
             else:
-                # 콤마 제거하는 숫자 비교 추가 (ex. 12,345 -> 12345)
-                ans_number = normalize_number(ans)
-                pred_number = normalize_number(pred)
-                if ans_number in pred_number:
-                    return True
-                elif pred_number in ans_number:
+                return False   
+        except:
+            ans_number = ans.replace(",", "").strip()
+            pred_number = pred.replace(",", "").strip()
+            try:
+                pred_int_wo_comma = int(pred_number)
+                ans_int_wo_comma = int(ans_number)
+                if pred_int_wo_comma == ans_int_wo_comma:
                     return True
                 else:
-                    # 시간 표현 비교 추가
-                    ans_time = normalize_time_format(ans)
-                    pred_time = normalize_time_format(pred)
-                    if ans_time in pred_time:
+                    return False      
+            except:
+                ans_cleaned = ans.replace('''"''', "").replace("'", "").replace("the", "").strip()
+                pred_cleaned = pred.replace('''"''', "").replace("'", "").replace("the", "").strip()
+                try:
+                    ans_cleaned = int(ans_cleaned)
+                    pred_cleaned = int(pred_cleaned)
+                    if ans_cleaned == pred_cleaned:
                         return True
                     else:
-                        # 쌍따옴표 제거 후 한 번 더 비교
-                        ans_cleaned_dubble = ans.replace('''"''', "").replace(".", "").strip()
-                        pred_cleaned_dubble = pred.replace('''"''', "").replace(".", "").strip()
-                        if ans_cleaned_dubble in pred_cleaned_dubble:
+                        return False  
+                except:
+                    ans_numeric_value = parse_numeric_value(ans)
+                    pred_numeric_value = parse_numeric_value(pred)
+                    try:
+                        check_isclose = math.isclose(ans_numeric_value, pred_numeric_value, rel_tol=0.0001, abs_tol=0.0001)
+                        if check_isclose:
+                            return True    
+                        else:
+                            return False
+                    except: # 이렇게까지 했으면, pred와 ans는 숫자가 아니다.
+                        pred = pred.lower()
+                        ans = ans.lower()
+                        # 포함 비율 계산
+                        if pred in ans:
                             return True
-                        elif pred_cleaned_dubble in ans_cleaned_dubble:
+                        elif ans in pred:
                             return True
                         else:
-                            # the 제거 후 한 번 더 비교
-                            ans_cleaned_the = ans.replace('''"''', "").replace(".", "").replace("the", "").strip()
-                            pred_cleaned_the = pred.replace('''"''', "").replace(".", "").replace("the", "").strip()
-                            if ans_cleaned_the in pred_cleaned_the:
+                            # 따옴표 제거 후 한 번 더 비교
+                            ans_cleaned = ans.replace("'", "")
+                            pred_cleaned = pred.replace("'", "")
+                            if ans_cleaned in pred_cleaned:
                                 return True
-                            elif pred_cleaned_the in ans_cleaned_the:
-                                return True    
+                            elif pred_cleaned in ans_cleaned:
+                                return True
                             else:
-                                # 숫자 값 비교 추가
-                                ans_value = parse_numeric_value(ans)
-                                pred_value = parse_numeric_value(pred)
-                                if ans_value is not None and pred_value is not None:
-                                    if math.isclose(ans_value, pred_value, rel_tol=1e-6, abs_tol=1e-12):
+                                # 분수 비교 추가
+                                ans_fraction = normalize_fraction(ans)
+                                pred_fraction = normalize_fraction(pred)
+                                if ans_fraction in pred_fraction:
+                                    return True
+                                elif pred_fraction in ans_fraction:
+                                    return True
+                                else:
+                                    # 시간 표현 비교 추가
+                                    ans_time = normalize_time_format(ans)
+                                    pred_time = normalize_time_format(pred)
+                                    if ans_time in pred_time:
+                                        return True
+                                    elif pred_time in ans_time:
                                         return True
                                     else:
-                                        return False
-                                else:
-                                    return False
-
+                                        # - => –
+                                        ans_bar = ans.replace("-", "–").strip()
+                                        pred_bar = pred.replace("-", "–").strip()
+                                        if ans_bar in pred_bar:
+                                            return True
+                                        elif pred_bar in ans_bar:
+                                            return True
+                                        else:
+                                            # 쌍따옴표 제거 후 한 번 더 비교
+                                            ans_cleaned_dubble = ans.replace('''"''', "").replace(".", "").strip()
+                                            pred_cleaned_dubble = pred.replace('''"''', "").replace(".", "").strip()
+                                            if ans_cleaned_dubble in pred_cleaned_dubble:
+                                                return True
+                                            elif pred_cleaned_dubble in ans_cleaned_dubble:
+                                                return True
+                                            else:
+                                                # the 제거 후 한 번 더 비교
+                                                ans_cleaned_the = ans.replace('''"''', "").replace(".", "").replace("the", "").strip()
+                                                pred_cleaned_the = pred.replace('''"''', "").replace(".", "").replace("the", "").strip()
+                                                if ans_cleaned_the in pred_cleaned_the:
+                                                    return True
+                                                elif pred_cleaned_the in ans_cleaned_the:
+                                                    return True    
+                                                else:
+                                                    return False
 

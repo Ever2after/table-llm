@@ -20,8 +20,8 @@ python ./run.py \
   --split_id 1 \
   --predict_with_generate \
   --num_beams 5 \
-  --input_noise 1
-
+  --input_noise 1 \
+  --max_predict_samples 10
 # --resume_from_checkpoint ${output_dir}/checkpoint-${checkpoint} \
-# --max_predict_samples 100
+
 # --aug True 

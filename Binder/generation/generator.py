@@ -130,7 +130,7 @@ class Generator(object):
         for idx, g in enumerate(result['choices']):
             try:
                 # fixme: hardcoded, fix later
-                text = g['message']['content'] if is_chat else g['text']
+                text = g.message.content if is_chat else g.text
                 if 'logprobs' not in g:
                     # Since the logprobs are not returned after the chatgpt era
                     logprob = 1
@@ -186,7 +186,7 @@ class Generator(object):
                     if isinstance(prompt, str):
                         prompt = [prompt]
                     for prompt_item in prompt:
-                        re = client.chat.complentions.create(
+                        re = client.chat.completions.create(
                             model=engine,
                             messages=[
                                 {"role": "system",
@@ -199,7 +199,7 @@ class Generator(object):
                             n=n,
                             stop=stop,
                         )
-                        choices += re["choices"]
+                        choices += re.choices
                     result = {"choices": choices}
                     print('Openai api inference time:', time.time() - start_time)
                     return result
@@ -219,7 +219,7 @@ class Generator(object):
                             stop=stop,
                             logprobs=1
                         )
-                        choices += re["choices"]
+                        choices += re.choices
                     result = {"choices": choices}
                     print('Openai api inference time:', time.time() - start_time)
                     return result

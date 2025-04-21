@@ -4,6 +4,7 @@ from typing import Optional
 from tqdm import tqdm
 from fire import Fire
 from agent import TableAgent, Model
+import numpy as np
 
 from utils.data import construct_markdown_table
 from utils.execute import markdown_to_df, remove_merged_suffixes, convert_cells_to_numbers
@@ -12,15 +13,18 @@ from utils.table import transpose, sort_dataframe
 from dataset.tabmwp import TabMWPDataset
 from dataset.wikitq import WikiTQDataset
 from dataset.tabfact import TabFactDataset
+from dataset.fetaqa import FeTaQDataset
+from dataset.tablebench import TableBenchDataset
+from dataset.penguin import PenguinDataset
 from dataset.general import GeneralDataset
 
 from run_helper import load_dataset, check_transpose, check_sort, read_json_file
-
 
 def main(
         model:Optional[str] = "gpt-4o-mini", # base model of the agent (for short prompt to save money)
         provider: str = "openai", # openai, huggingface, vllm
         dataset:str = "wtq", # wtq, tabfact
+        split:str = "test", # test, dev, train
         perturbation: str = "none", # none, transpose, shuffle, transpose_shuffle
         norm: bool = True, # whether to NORM the table
         disable_resort: bool = True, # whether to disable the resort stage in NORM
@@ -44,13 +48,19 @@ def main(
     
     #### load dataset ####
     if dataset == "wtq":
-        data = WikiTQDataset(cache_dir='data', split='test')
+        data = WikiTQDataset(cache_dir='data', split=split)
     elif dataset == "tabfact":
-        data = TabFactDataset(cache_dir='data', split='test')
+        data = TabFactDataset(cache_dir='data', split=split)
     elif dataset == "tabmwp":
-        data = TabMWPDataset(cache_dir='data', split='test')
+        data = TabMWPDataset(cache_dir='data', split=split)
+    elif dataset == "fetaqa":
+        data = FeTaQDataset(cache_dir='data', split=split)
+    elif dataset == "tablebench":
+        data = TableBenchDataset(cache_dir='data', split=split)
+    elif dataset == "penguin":
+        data = PenguinDataset(cache_dir='data', split=split)
     else:
-        data = GeneralDataset(cache_dir='data', split='test')
+        data = GeneralDataset(cache_dir='data', split=split)
     
 
     #### load the model ####
@@ -87,12 +97,14 @@ def main(
         df = d["table"]
         table = df.to_markdown()
         question_id = d["question_id"]
+        if isinstance(question_id, np.int64):
+            question_id = int(question_id)
         
         title = d.get("title", "")
         table_id = d.get("table_id", idx)
         
         if norm:
-            transpose_flag = check_transpose(model, model, table, title, table_id, perturbation, transpose_cache, norm_cache, cache_dir)
+            transpose_flag = False # check_transpose(model, model, table, title, table_id, perturbation, transpose_cache, norm_cache, cache_dir)
             
             if transpose_flag:
                 transposed_df = transpose(df)

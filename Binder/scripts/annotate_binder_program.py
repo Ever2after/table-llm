@@ -15,7 +15,7 @@ import multiprocessing
 import sys 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
 
-from generation.generator import Generator
+from generation.custom_generator import Generator
 from utils.utils import load_data_split
 from nsql.database import NeuralDB
 

@@ -101,7 +101,7 @@ def main():
                                     downsize=data_args.squall_downsize,
                                     split_id=data_args.split_id,
                                     # download_mode='force_redownload',
-                                    trust_remote_code=True,
+                                    # trust_remote_code=True,
                                     ignore_verifications=True)
     elif data_args.dataset_name == 'wikisql':
         task = "./task/wikisql_robut.py"
@@ -109,7 +109,14 @@ def main():
                                     split_id=data_args.split_id,
                                     perturbation_type=data_args.perturbation_type,
                                     # download_mode='force_redownload',
-                                    trust_remote_code=True,
+                                    # trust_remote_code=True,
+                                    ignore_verifications=True)
+    elif data_args.dataset_name == 'tabmwp':
+        task = "./task/tabmwp.py"
+        raw_datasets = load_dataset(task, 
+                                    # split_id=data_args.split_id,
+                                    # download_mode='force_redownload',
+                                    # trust_remote_code=True,
                                     ignore_verifications=True)
     else:
         raise NotImplementedError

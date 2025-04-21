@@ -3,16 +3,24 @@ import os
 import time
 import tiktoken
 import timeout_decorator
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, Gemma3ForCausalLM
 from typing import Optional, Union
+import torch
             
 class Model:
     def __init__(self, model_name: str, provider: str = 'openai'):
         self.model_name = model_name
         self.provider = provider  # 'openai' or 'huggingface'
         if provider == 'huggingface':
-            self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-            self.model = AutoModelForCausalLM.from_pretrained(model_name)
+            if 'gemma-3' in model_name:
+                # quantization_config = BitsAndBytesConfig(load_in_8bit=True)
+                self.model = Gemma3ForCausalLM.from_pretrained(
+                    model_name, # quantization_config=quantization_config
+                ).eval()
+                self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+            else: 
+                self.tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+                self.model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=True, torch_dtype=torch.bfloat16).cuda()
         elif provider == 'openai':
             self.tokenizer = tiktoken.encoding_for_model(model_name)
             
@@ -25,7 +33,7 @@ class Model:
                 
         elif provider == "vllm":
             from vllm import LLM
-            self.model = LLM(model_name, gpu_memory_utilization=0.7, dtype="float16", max_model_len=1024)
+            self.model = LLM(model_name, gpu_memory_utilization=0.9, max_model_len=4096, trust_remote_code=True)
             self.tokenizer = self.model.get_tokenizer()
 
 
@@ -81,15 +89,80 @@ class Model:
         raise RuntimeError("Failed to query the OpenAI API after 64 retries.")
 
     def query_huggingface(self, prompt: str, **kwargs) -> str:
-        inputs = self.tokenizer.encode(prompt, return_tensors="pt")
-        outputs = self.model.generate(inputs, **kwargs)
+        if 'gemma-3' in self.model_name:
+            messages = [
+                [
+                    {
+                        "role": "user",
+                        "content": [{"type": "text", "text": prompt},]
+                    },
+                ],
+            ]
+            inputs = self.tokenizer.apply_chat_template(
+                messages,
+                add_generation_prompt=True,
+                tokenize=True,
+                return_dict=True,
+                return_tensors="pt",
+            ).to(self.model.device, dtype=torch.bfloat16)
+            
+            input_len = inputs["input_ids"].shape[-1]
 
-        # Decode the generated text
-        decoded_outputs = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-        
-        # Remove the prompt from the start of the sequence
-        prompt_length = len(self.tokenizer.decode(inputs[0], skip_special_tokens=True, clean_up_tokenization_spaces=True))
-        return decoded_outputs[prompt_length:], {"prompt": prompt, "prompt_length": len(inputs[0])}
+            with torch.inference_mode():
+                generation = self.model.generate(**inputs, do_sample=False, **kwargs)
+                generation = generation[0][input_len:]
+
+            decoded = self.tokenizer.decode(generation, skip_special_tokens=True)
+            return decoded, {"prompt": prompt, "prompt_length": len(inputs[0])}
+
+            # with torch.inference_mode():
+            #     outputs = self.model.generate(**inputs, **kwargs)
+
+            # decoded_outputs = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+            # prompt_length = len(self.tokenizer.decode(inputs[0].ids, skip_special_tokens=True, clean_up_tokenization_spaces=True))
+
+            # return decoded_outputs[prompt_length:], {"prompt": prompt, "prompt_length": len(inputs[0])}
+            
+            
+        else:
+            # prompt = f'<｜begin▁of▁sentence｜>User: {prompt} Assistant:'
+            if 'gemma-2' in self.model_name:
+                
+                n = kwargs.get("n", 1)
+                if n > 1:
+                    prompt = "<bos><start_of_turn>user\n" + prompt + "<end_of_turn>\n<start_of_turn>model\n"
+                    prompt = [prompt] * n
+                else: 
+                    prompt = "<bos><start_of_turn>user\n" + prompt + "<end_of_turn>\n<start_of_turn>model\n"
+            
+                inputs = self.tokenizer(prompt, return_tensors="pt").to(self.model.device)
+            
+                outputs = self.model.generate(**inputs, use_cache=False, temperature=kwargs.get("temperature", 0.8), max_new_tokens=kwargs.get("max_new_tokens", 256), do_sample=True)
+
+                # Decode the generated text
+                decoded_outputs = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
+
+                if n > 1:
+                    cleaned_outputs = []
+                    for i in range(n):
+                        prompt_length = len(self.tokenizer.decode(inputs[i].ids, skip_special_tokens=True, clean_up_tokenization_spaces=True))
+                        cleaned_outputs.append(decoded_outputs[i][prompt_length:])
+                        
+                    return cleaned_outputs, {"prompt": prompt, "prompt_length": len(inputs[0])}
+                else:
+                    prompt_length = len(self.tokenizer.decode(inputs[0].ids, skip_special_tokens=True, clean_up_tokenization_spaces=True))
+                    return decoded_outputs[0][prompt_length:], {"prompt": prompt, "prompt_length": len(inputs[0])}
+            else:
+                inputs = self.tokenizer(prompt, return_tensors="pt").to(self.model.device)
+                
+                outputs = self.model.generate(**inputs, use_cache=False, **kwargs)
+
+                # Decode the generated text
+                decoded_outputs = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+                
+                # Remove the prompt from the start of the sequence
+                prompt_length = len(self.tokenizer.decode(inputs[0].ids, skip_special_tokens=True, clean_up_tokenization_spaces=True))
+                return decoded_outputs[prompt_length:], {"prompt": prompt, "prompt_length": len(inputs[0])}
     
     def query_vllm(self, prompt: str, **kwargs) -> str:
         from vllm import SamplingParams

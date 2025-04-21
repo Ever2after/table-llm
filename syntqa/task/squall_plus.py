@@ -269,7 +269,7 @@ class Squall(datasets.GeneratorBasedBuilder):
 
 if __name__=='__main__':
     from datasets import load_dataset
-    dataset = load_dataset("/scratch/sz4651/Projects/SynTableQA/task/squall_plus.py", 
+    dataset = load_dataset("./task/squall_plus.py", 
                            plus=True, 
                            split_id=1)
     sample = dataset["test"][7]

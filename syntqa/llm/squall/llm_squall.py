@@ -11,12 +11,13 @@ client = OpenAI(
 )
 model = 'gpt-3.5-turbo'
 # model="gpt-4-0125-preview"
-file_path = "llm/squall/squall_classifier_test1_gpt.csv"
+file_path = "llm/squall/tabmwp_classifier_test2.csv"
 
 df = pd.read_csv(file_path)
 
 df['truncated_tableqa'] = pd.to_numeric(df['truncated_tableqa'])
 df = df.reset_index(drop=True)
+df.loc[:,'gpt_score'] = 0
 print('df size: ', df.shape)
 
 ##############
@@ -38,6 +39,7 @@ with open('llm/squall/contradiction-prompt.txt', 'r') as f:
 
 ##############
 def checkDigit(res):
+    res = str(res)
     return res.replace('.','').replace(',','').isdigit()
 
 def call_gpt(cur_prompt, stop, temperature = 0):
@@ -128,7 +130,7 @@ def countNumber(table, question):
 
 for i, row in df.iterrows():
 
-    if i < 3000 and row['gpt_score'] in [1, 0]:
+    if i < 0 and row['gpt_score'] in [1, 0]:
         continue
 
     print('\n----row: ', i, '-----')

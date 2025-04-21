@@ -24,7 +24,7 @@ class TableProcessor(object):
         # linearize a table into a string
         linear_table = self.table_linearize_func.process_table(table_content)
         # concat question with linear_table
-        joint_input = question + " " + linear_table
+        joint_input = question + linear_table
         return joint_input
 
     def process_output(self, answer: List[str]) -> str:
