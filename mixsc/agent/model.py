@@ -12,15 +12,8 @@ class Model:
         self.model_name = model_name
         self.provider = provider  # 'openai' or 'huggingface'
         if provider == 'huggingface':
-            if 'gemma-3' in model_name:
-                # quantization_config = BitsAndBytesConfig(load_in_8bit=True)
-                self.model = Gemma3ForCausalLM.from_pretrained(
-                    model_name, # quantization_config=quantization_config
-                ).eval()
-                self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-            else: 
-                self.tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-                self.model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=True, torch_dtype=torch.bfloat16).cuda()
+            self.tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+            self.model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=True, torch_dtype=torch.bfloat16).cuda()
         elif provider == 'openai':
             self.tokenizer = tiktoken.encoding_for_model(model_name)
             
@@ -33,7 +26,8 @@ class Model:
                 
         elif provider == "vllm":
             from vllm import LLM
-            self.model = LLM(model_name, gpu_memory_utilization=0.9, max_model_len=4096, trust_remote_code=True)
+            max_model_len = 4096 if 'gemma' in model_name else 16000
+            self.model = LLM(model_name, gpu_memory_utilization=0.9, max_model_len=max_model_len, trust_remote_code=True)
             self.tokenizer = self.model.get_tokenizer()
 
 
@@ -88,99 +82,95 @@ class Model:
 
         raise RuntimeError("Failed to query the OpenAI API after 64 retries.")
 
-    def query_huggingface(self, prompt: str, **kwargs) -> str:
-        if 'gemma-3' in self.model_name:
-            messages = [
-                [
-                    {
-                        "role": "user",
-                        "content": [{"type": "text", "text": prompt},]
-                    },
-                ],
-            ]
-            inputs = self.tokenizer.apply_chat_template(
-                messages,
-                add_generation_prompt=True,
-                tokenize=True,
-                return_dict=True,
-                return_tensors="pt",
-            ).to(self.model.device, dtype=torch.bfloat16)
+    def query_huggingface(self, prompt: str, **kwargs) -> str:            
+        if 'gemma-2' in self.model_name:
+            n = kwargs.get("n", 1)
+            if n > 1:
+                prompt = "<bos><start_of_turn>user\n" + prompt + "<end_of_turn>\n<start_of_turn>model\n"
+                prompt = [prompt] * n
+            else: 
+                prompt = "<bos><start_of_turn>user\n" + prompt + "<end_of_turn>\n<start_of_turn>model\n"
             
-            input_len = inputs["input_ids"].shape[-1]
+            inputs = self.tokenizer(prompt, return_tensors="pt").to(self.model.device)
+            outputs = self.model.generate(**inputs, use_cache=False, temperature=kwargs.get("temperature", 0.8), max_new_tokens=kwargs.get("max_new_tokens", 256), do_sample=True)
 
-            with torch.inference_mode():
-                generation = self.model.generate(**inputs, do_sample=False, **kwargs)
-                generation = generation[0][input_len:]
+            # Decode the generated text
+            decoded_outputs = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
 
-            decoded = self.tokenizer.decode(generation, skip_special_tokens=True)
-            return decoded, {"prompt": prompt, "prompt_length": len(inputs[0])}
-
-            # with torch.inference_mode():
-            #     outputs = self.model.generate(**inputs, **kwargs)
-
-            # decoded_outputs = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-            # prompt_length = len(self.tokenizer.decode(inputs[0].ids, skip_special_tokens=True, clean_up_tokenization_spaces=True))
-
-            # return decoded_outputs[prompt_length:], {"prompt": prompt, "prompt_length": len(inputs[0])}
-            
-            
-        else:
-            # prompt = f'<｜begin▁of▁sentence｜>User: {prompt} Assistant:'
-            if 'gemma-2' in self.model_name:
-                
-                n = kwargs.get("n", 1)
-                if n > 1:
-                    prompt = "<bos><start_of_turn>user\n" + prompt + "<end_of_turn>\n<start_of_turn>model\n"
-                    prompt = [prompt] * n
-                else: 
-                    prompt = "<bos><start_of_turn>user\n" + prompt + "<end_of_turn>\n<start_of_turn>model\n"
-            
-                inputs = self.tokenizer(prompt, return_tensors="pt").to(self.model.device)
-            
-                outputs = self.model.generate(**inputs, use_cache=False, temperature=kwargs.get("temperature", 0.8), max_new_tokens=kwargs.get("max_new_tokens", 256), do_sample=True)
-
-                # Decode the generated text
-                decoded_outputs = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
-
-                if n > 1:
-                    cleaned_outputs = []
-                    for i in range(n):
-                        prompt_length = len(self.tokenizer.decode(inputs[i].ids, skip_special_tokens=True, clean_up_tokenization_spaces=True))
-                        cleaned_outputs.append(decoded_outputs[i][prompt_length:])
+            if n > 1:
+                cleaned_outputs = []
+                for i in range(n):
+                    prompt_length = len(self.tokenizer.decode(inputs[i].ids, skip_special_tokens=True, clean_up_tokenization_spaces=True))
+                    cleaned_outputs.append(decoded_outputs[i][prompt_length:])
                         
-                    return cleaned_outputs, {"prompt": prompt, "prompt_length": len(inputs[0])}
-                else:
-                    prompt_length = len(self.tokenizer.decode(inputs[0].ids, skip_special_tokens=True, clean_up_tokenization_spaces=True))
-                    return decoded_outputs[0][prompt_length:], {"prompt": prompt, "prompt_length": len(inputs[0])}
+                return cleaned_outputs, {"prompt": prompt, "prompt_length": len(inputs[0])}
             else:
-                inputs = self.tokenizer(prompt, return_tensors="pt").to(self.model.device)
-                
-                outputs = self.model.generate(**inputs, use_cache=False, **kwargs)
-
-                # Decode the generated text
-                decoded_outputs = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-                
-                # Remove the prompt from the start of the sequence
                 prompt_length = len(self.tokenizer.decode(inputs[0].ids, skip_special_tokens=True, clean_up_tokenization_spaces=True))
-                return decoded_outputs[prompt_length:], {"prompt": prompt, "prompt_length": len(inputs[0])}
+                return decoded_outputs[0][prompt_length:], {"prompt": prompt, "prompt_length": len(inputs[0])}
+        if 'llama-3.2' in self.model_name:
+            n = kwargs.get("n", 1)
+            if n > 1:
+                prompt = "<|begin_of_text|><|start_header_id|>user<|end_header_id|>" + prompt + "<|eot_id><|start_header_id|>assistant<|end_header_id|>"
+                prompt = [prompt] * n
+            else:
+                prompt = "<|begin_of_text|><|start_header_id|>user<|end_header_id|>" + prompt + "<|eot_id><|start_header_id|>assistant<|end_header_id|>"
+                
+            inputs = self.tokenizer(prompt, return_tensors="pt").to(self.model.device)
+            outputs = self.model.generate(**inputs, use_cache=False, temperature=kwargs.get("temperature", 0.8), max_new_tokens=kwargs.get("max_new_tokens", 256), do_sample=True)
+
+            # Decode the generated text
+            decoded_outputs = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
+
+            if n > 1:
+                cleaned_outputs = []
+                for i in range(n):
+                    prompt_length = len(self.tokenizer.decode(inputs[i].ids, skip_special_tokens=True, clean_up_tokenization_spaces=True))
+                    cleaned_outputs.append(decoded_outputs[i][prompt_length:])
+                        
+                return cleaned_outputs, {"prompt": prompt, "prompt_length": len(inputs[0])}
+            else:
+                prompt_length = len(self.tokenizer.decode(inputs[0].ids, skip_special_tokens=True, clean_up_tokenization_spaces=True))
+                return decoded_outputs[0][prompt_length:], {"prompt": prompt, "prompt_length": len(inputs[0])}
+        else:
+            inputs = self.tokenizer(prompt, return_tensors="pt").to(self.model.device)
+                
+            outputs = self.model.generate(**inputs, use_cache=False, **kwargs)
+
+            # Decode the generated text
+            decoded_outputs = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+                
+            # Remove the prompt from the start of the sequence
+            prompt_length = len(self.tokenizer.decode(inputs[0].ids, skip_special_tokens=True, clean_up_tokenization_spaces=True))
+            return decoded_outputs[prompt_length:], {"prompt": prompt, "prompt_length": len(inputs[0])}
     
     def query_vllm(self, prompt: str, **kwargs) -> str:
         from vllm import SamplingParams
         
         n = kwargs.get("n", 1)
-    
         
         sampling_params = SamplingParams(
-            max_tokens=256,
+            max_tokens=kwargs.get('max_new_tokens', 256),
             temperature=kwargs.get("temperature", 0.8),
             stop=kwargs.get("stop", []),
             top_p=kwargs.get("top_p", 1.0) if kwargs.get("temperature", 0.8) != 0 else 1.0,
-
         )
         
-        prompts = [
-            f"A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. USER: {prompt} ASSISTANT:"
-        ]*n
+        messages = [
+            # {"role": "system", "content": "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions."},
+            {"role": "user", "content": prompt}
+        ]
+        
+        prompt = self.tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True
+        )
+        
+        prompts = [prompt] * n
+        
+        # prompts = [
+        #     f"A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. USER: {prompt} ASSISTANT:"
+        # ]*n
         
         try:      
             outputs = self.model.generate(
