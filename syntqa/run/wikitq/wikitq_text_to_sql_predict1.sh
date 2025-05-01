@@ -1,12 +1,18 @@
 export CUDA_VISIBLE_DEVICES=0
 
+
+export HF_HOME=/mnt/data/jusang/.cache/huggingface
+export HF_TOKEN=
+
 # model_name="t5-large"
-model_name="Qwen/Qwen2.5-Coder-14B-Instruct"
+# model_name="google/gemma-2-2b-it"
+model_name="Qwen/Qwen2.5-7B-Instruct"
+# model_name="meta-llama/Llama-3.2-3B-Instruct"
 dataset_name="wikitq"
 output_dir="output/wikitq_text_to_sql1"
 checkpoint=4600
 
-python ./run2.py \
+python ./run_vllm.py \
   --task text_to_sql \
   --do_predict \
   --squall_plus True \
@@ -22,7 +28,7 @@ python ./run2.py \
   --split_id 5 \
   --predict_with_generate \
   --num_beams 1 \
-  --max_predict_samples 10000 \
+  --max_predict_samples 10 \
 
   # --input_noise 9
   

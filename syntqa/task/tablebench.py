@@ -12,12 +12,12 @@ class TableBenchDataset(datasets.GeneratorBasedBuilder):
                     "id": datasets.Value("string"),
                     "qtype": datasets.Value("string"),
                     "qsubtype": datasets.Value("string"),
-                    "instruction": datasets.Value("string"),
-                    "instruction_type": datasets.Value("string"),
-                    "table": datasets.Value("string"),
+                    "table": {
+                        "columns": datasets.Sequence(datasets.Value("string")),
+                        "data": datasets.Sequence(datasets.Sequence(datasets.Value("string"))),
+                    },
                     "question": datasets.Value("string"),
                     "answer": datasets.Value("string"),
-                    "answer_formatter": datasets.Value("string"),
                     "chart_type": datasets.Value("string"),
                     "split": datasets.Value("string"),
                 }
@@ -34,7 +34,7 @@ class TableBenchDataset(datasets.GeneratorBasedBuilder):
         """
         # 로컬 파일 경로 예시(또는 URL로 제공 가능)
         # train_data_path = "data/tablebench/tablebench_train.jsonl"
-        test_data_path = "data/tablebench/tablebench_test.jsonl"
+        test_data_path = "data/tablebench/tablebench_train.jsonl"
         
         # URL인 경우 (예시)
         # data_url = "https://raw.githubusercontent.com/.../tabmwp.json"
@@ -62,10 +62,20 @@ class TableBenchDataset(datasets.GeneratorBasedBuilder):
         target_split(예: "train", "test")에 해당하는 항목만 필터링합니다.
         """
         qsubtypes = { 
-            'Aggregation', 'ArithmeticCalculation', 'Comparison', 'Counting',
-            'Domain-Specific', 'MatchBased', 'Multi-hop FactChecking',
-            'Multi-hop NumericalReasoing', 'Ranking', 'StatisticalAnalysis',
-            'Time-basedCalculation', 'TrendForecasting'
+            'Aggregation',
+            'ArithmeticCalculation',
+            'Comparison',
+            'CorrelationAnalysis',
+            'Counting',
+            'Domain-Specific',
+            'ImpactAnalysis',
+            'MatchBased',
+            'Multi-hop FactChecking',
+            'Multi-hop NumericalReasoing',
+            'Ranking',
+            'StatisticalAnalysis',
+            'Time-basedCalculation',
+            'TrendForecasting'
         }
         with open(filepath, "r", encoding="utf-8") as f:
             # jsonl 파일을 한 줄씩 읽어옴

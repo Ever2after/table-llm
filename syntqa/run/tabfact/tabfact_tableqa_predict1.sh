@@ -1,12 +1,16 @@
 export CUDA_VISIBLE_DEVICES=0
 
-# model_name="neulab/omnitab-large"
-model_name="Qwen/Qwen2.5-Coder-14B-Instruct"
+export HF_HOME=/mnt/data/jusang/.cache/huggingface
+export HF_TOKEN=
+
+model_name="google/gemma-2-27b-it"
+# model_name="Qwen/Qwen2.5-7B-Instruct"
+# model_name="meta-llama/Llama-3.2-3B-Instruct"
 dataset_name="tabfact"
 output_dir="output/tabfact_tableqa1"
 checkpoint=4050
 
-python ./run2.py \
+python ./run_vllm.py \
   --task tableqa \
   --do_predict \
   --squall_plus True \
@@ -18,7 +22,7 @@ python ./run2.py \
   --val_max_target_length 2048 \
   --per_device_eval_batch_size 1 \
   --dataset_name ${dataset_name} \
-  --split_id 5 \
+  --split_id 2 \
   --predict_with_generate \
   --num_beams 1 \
   --max_predict_samples 100000

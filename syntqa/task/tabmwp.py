@@ -46,10 +46,10 @@ class TabmwpDataset(datasets.GeneratorBasedBuilder):
         # data_path = dl_manager.download_and_extract(data_url)
 
         return [
-            datasets.SplitGenerator(
-                name=datasets.Split.TRAIN,
-                gen_kwargs={"filepath": train_data_path, "target_split": "train"},
-            ),
+            # datasets.SplitGenerator(
+            #     name=datasets.Split.TRAIN,
+            #     gen_kwargs={"filepath": train_data_path, "target_split": "train"},
+            # ),
             datasets.SplitGenerator(
                 name=datasets.Split.TEST,
                 gen_kwargs={"filepath": test_data_path, "target_split": "test"},

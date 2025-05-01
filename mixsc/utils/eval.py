@@ -163,7 +163,7 @@ def extract_answer(text:str, patterns:list = [r"Final Answer: (.*)", r": (.*)", 
             
             if return_match_flag:
                 return answer, match_flag
-            return answer
+            return answer.replace('final answer:', '').strip()
 
     if return_match_flag:
         return answer, match_flag
