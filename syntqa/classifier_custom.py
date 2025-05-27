@@ -1,18 +1,6 @@
-import json
 import numpy as np
 import pandas as pd
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.ensemble import AdaBoostClassifier
-from sklearn.neural_network import MLPClassifier
-from sklearn.svm import SVC
-import pickle
-import os
-from sklearn import linear_model
 import random
-from copy import deepcopy
-from metric.squall_evaluator import to_value_list
 
 seed = 2024
 np.random.seed(seed)
@@ -64,7 +52,7 @@ def load_df_test(dataset, test_split, downsize=None):
 
 if __name__=='__main__':
     dataset = 'tablebench'
-    test_split = 3
+    test_split = 10
     downsize = None
 
     df_test = load_df_test(dataset, test_split, downsize=downsize)

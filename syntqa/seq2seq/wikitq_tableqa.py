@@ -17,7 +17,7 @@ def preprocess_function(
 ):
     TABLE_PROCESSOR = get_custom_processor(
         max_cell_length=10000, 
-        max_input_length=10000, 
+        max_input_length=8000, 
         target_delimiter=', ',
         model_name=model_name
     )

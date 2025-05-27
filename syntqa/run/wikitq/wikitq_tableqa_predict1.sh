@@ -1,11 +1,8 @@
 export CUDA_VISIBLE_DEVICES=0
 
-export HF_HOME=/mnt/data/jusang/.cache/huggingface
-export HF_TOKEN=
-
 # model_name="neulab/omnitab-large"
 model_name="google/gemma-2-27b-it"
-# model_name="Qwen/Qwen2.5-7B-Instruct"
+# model_name="Qwen/Qwen2.5-32B-Instruct"
 # model_name="meta-llama/Llama-3.2-3B-Instruct"
 
 dataset_name="wikitq"

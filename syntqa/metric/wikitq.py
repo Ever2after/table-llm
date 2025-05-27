@@ -73,17 +73,19 @@ def prepare_compute_metrics(tokenizer, eval_dataset, stage=None, fuzzy=False):
         preds = []
         for pred in decoded_preds:
             try:
-                pred = pred.split("'''")[1]
-                pred = pred.split("'''")[0]
-                preds.append(pred.strip())
+                matches = re.findall(r'"code"\s*:\s*"([^"]*)"', pred)
+                match = matches[-1] if matches else None
+                if match is None:
+                    matches = re.findall(r"'code'\s*:\s*'''(.*?)'''", pred, re.DOTALL)
+                    match = matches[-1] if matches else None
+                
+                if match is None:
+                    pred = ""
+                else:
+                    pred = match.strip()
             except:
-                try:
-                    pred = pred.split('"code":')[1].strip()
-                    pred = pred.split('"')[1]
-                    pred = pred.split('"')[0]
-                    preds.append(pred)
-                except:
-                    preds.append("")
+                pred = ""
+            preds.append(pred)
 
         sql_results, errors = postprocess_sql_predictions(preds, eval_dataset, fuzzy)
 

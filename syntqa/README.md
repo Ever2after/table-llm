@@ -1,4 +1,67 @@
-# SynTableQA
+# SynTableQA (Custom)
+
+## Installation
+```bash
+conda create --name syntqa python=3.12 # 맞는 python 버전 언급이 없음
+conda activate syntqa
+pip install -r requirements.txt
+```
+
+## Inference
+### TableQA and Text2SQL
+```bash
+# TableQA
+run/{dataset}/{dataset}_tableqa_predict1.sh
+
+# Text2SQL 
+run/{dataset}/{dataset}_text_to_sql_predict1.sh
+```
+If you want to inference with openai model(gpt-4o, etc.), change `python ./run_vllm.py` to `python ./run_openai.py`.
+
+### Selector
+```bash
+# combine tableqa result and text2sql result
+python classifier_custom.py
+```
+```bash
+# run custom selector 
+python llm/squall/llm_custom.py
+```
+
+### Evaluation
+See `notebooks/custom_eval.ipynb`.
+
+## Added Files
+```
+.
+├── run_vllm.py
+├── run_openai.py
+│ 
+├── classifier_custom.py
+│
+├── task/
+│   └── {dataset}.py
+├── seq2seq/
+│   ├── {dataset}.py
+│   └── {dataset}_tableqa.py
+├── metric/
+│   ├── {dataset}.py
+│   └── {dataset}_tableqa.py
+├── run/
+│   └── {dataset}/
+│       ├── {dataset}_tableqa_predict1.sh
+│       └── {dataset}_text_to_sql_predict1.sh
+└── utils/
+    ├── metric.py
+    └── processor/
+        ├── __init__.py
+        ├── table_custom_linearlize.py
+        └── table_custom_processor.py
+
+```
+
+
+# SynTableQA (Original)
 
 Code for 2024 EMNLP Findings
 

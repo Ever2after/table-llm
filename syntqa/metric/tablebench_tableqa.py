@@ -18,7 +18,8 @@ def prepare_compute_metrics(tokenizer, eval_dataset, stage=None, fuzzy=None):
         if isinstance(preds, tuple):
             preds = preds[0]
 
-        decoded_preds = tokenizer.batch_decode(preds, skip_special_tokens=True)
+        decoded_preds = preds
+        # decoded_preds = tokenizer.batch_decode(preds, skip_special_tokens=True)
 
         preds = []
         for pred in decoded_preds:

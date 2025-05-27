@@ -37,16 +37,24 @@ class TableLinearize(abc.ABC):
 
 
 class IndexedRowTableLinearize(TableLinearize):
-    """
-    FORMAT: col: col1 | col2 | col3 row 1 : val1 | val2 | val3 row 2 : ...
-    """
 
     def process_table(self, table_content: Dict):
         """
         Given a table, TableLinearize aims at converting it into a flatten sequence with special symbols.
         """
-        df = pd.DataFrame(table_content['rows'], columns=table_content['header'])
-        return df_to_table_prompt(df)
+        # df = pd.DataFrame(table_content['rows'], columns=table_content['header'])
+        # return df_to_table_prompt(df)
+
+        assert "header" in table_content and "rows" in table_content, self.PROMPT_MESSAGE
+
+        headers = self.process_header(table_content["header"])
+        rows = [self.process_row(row, i) for i, row in enumerate(table_content["rows"])]
+        table_str  = headers
+        table_str += "\n--\n"
+        table_str += "-- Rows:\n"
+        table_str += "\n".join(rows)
+        return table_str
+
     
     def process_header(self, headers: List):
         lines = []
@@ -56,8 +64,8 @@ class IndexedRowTableLinearize(TableLinearize):
         return '\n'.join(lines)
     
     def process_row(self, row: List, row_index: int):
-        row_values = [str(val) for val in row]
-        return f'--   {" | ".join(row_values)}'
+        row = [str(val) for val in row]
+        return f"--   {' | '.join(row)}"
 
 def guess_sql_type(dtype) -> str:
     """
@@ -70,34 +78,23 @@ def guess_sql_type(dtype) -> str:
         return "DECIMAL"
     elif pd.api.types.is_bool_dtype(dtype):
         return "BOOLEAN"
-    # 날짜/시계열 타입 등 추가적으로 처리하려면 여기에 elif 추가
     else:
-        # 문자열(object) 등은 TEXT로 처리
         return "TEXT"
 
 def df_to_table_prompt(df: pd.DataFrame) -> str:
-    """
-    주어진 df(DataFrame)를 -- Table: ... 형태의 문자열로 변환합니다.
-    """
-    # 테이블 명 줄 만들기
     lines = []
     lines.append("-- Columns:")
     
-    # 각 컬럼에 대한 자료형 매핑
     for col in df.columns:
         col_type = guess_sql_type(df[col].dtypes)
         # lines.append(f"--   {col} ({col_type})")
         lines.append(f"--   {col}")
 
-    # 행(Row) 정보 구성
     lines.append("--")
     lines.append("-- Rows:")
-    # 각 행을 출력 형식에 맞게 구성
     for idx, row in df.iterrows():
-        # 예: "  Braden | 76"
         row_values = [str(val) for val in row.values]
         lines.append(f"--   {' | '.join(row_values)}")
 
-    # 최종 문자열
     table_prompt = "\n".join(lines)
     return table_prompt

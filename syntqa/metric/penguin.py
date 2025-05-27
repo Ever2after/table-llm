@@ -66,54 +66,36 @@ def postprocess_sql_predictions(decoded_preds, eval_dataset, fuzzy=False):
     return results, errors
 
 
-def prepare_compute_metrics(tokenizer, eval_dataset, stage=None, fuzzy=False, custom=False):
+def prepare_compute_metrics(tokenizer, eval_dataset, stage=None, fuzzy=False):
     
-    def compute_metrics(eval_preds, meta=None):
+    def compute_metrics(eval_preds, meta=None, vllm=False):
         preds, labels = eval_preds
 
-        # (1) preds가 tuple인 경우 정리
         if isinstance(preds, tuple):
             preds = preds[0]
 
-        # (2) -100 (pad) → tokenizer.pad_token_id 치환
-        preds_no_minus100 = []
-        for seq in preds:
-            # seq는 길이가 다른 토큰 시퀀스
-            # seq 내에서 -100을 pad_token_id로 바꾸기
-            seq_no_minus100 = [tok if tok != -100 else tokenizer.pad_token_id for tok in seq]
-            preds_no_minus100.append(seq_no_minus100)
-        decoded_preds = tokenizer.batch_decode(preds_no_minus100, skip_special_tokens=True)
+        decoded_preds = tokenizer.batch_decode(preds, skip_special_tokens=True)
 
         preds = []
         for pred in decoded_preds:
             try:
-                if custom:
-                    pred = pred.split("'''")[1]
-                    pred = pred.split("'''")[0]
-                    preds.append(pred.strip())
-                    continue
+                matches = re.findall(r'"code"\s*:\s*"([^"]*)"', pred)
+                match = matches[-1] if matches else None
+                if match is None:
+                    matches = re.findall(r"'code'\s*:\s*'''(.*?)'''", pred, re.DOTALL)
+                    match = matches[-1] if matches else None
+                
+                if match is None:
+                    pred = ""
                 else:
-                    pred = pred.split('Final Answer: ')[1]
-                    # sql문 파싱 (```sql ... ``` -> ...)
-                    pred = re.sub(r'```sql\n', '', pred)
-                    pred = re.sub(r'```', '', pred)
-                    pred = pred.replace('`', '')
-                    pred = pred.strip()
-                    preds.append(pred)
+                    pred = match.strip()
             except:
-                try:
-                    pred = pred.split('"code":')[1].strip()
-                    pred = pred.split('"')[1]
-                    pred = pred.split('"')[0]
-                    preds.append(pred)
-                except:
-                    preds.append("")
+                pred = ""
+            preds.append(pred)
 
 
-        # (3) SQL 후처리 & 실행
         sql_results, errors = postprocess_sql_predictions(preds, eval_dataset, fuzzy)
 
-        # (4) 정답 비교
         correct_flags = []
         for i, result_str in enumerate(sql_results):
 
@@ -130,18 +112,17 @@ def prepare_compute_metrics(tokenizer, eval_dataset, stage=None, fuzzy=False, cu
 
         acc = np.mean(correct_flags)
 
-        # (5) CSV 저장 (stage)
         if stage:
             to_save = {
                 'id': eval_dataset['id'],
                 'question': eval_dataset['question'],
-                'answer': eval_dataset['answer'],  # 실제 정답
+                'answer': eval_dataset['answer'],  
                 'acc': [int(b) for b in correct_flags],
-                'sql_pred': preds,         # 모델이 만든 SQL
-                'sql_result': sql_results,         # SQL 실행 결과
-                'error': errors,            # SQL 실행 에러
+                'sql_pred': preds,         
+                'sql_result': sql_results,         
+                'error': errors,            
                 'truncated': eval_dataset['truncated'],
-                'input_tokens': tokenizer.batch_decode(eval_dataset['input_ids']),
+                'input_tokens': tokenizer.batch_decode(eval_dataset['input_ids']) if not vllm else eval_dataset['input_texts'],
             }
             if meta:
                 to_save['log_probs_sum'] = meta.get('log_probs_sum', [])

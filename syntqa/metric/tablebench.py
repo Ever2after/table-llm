@@ -72,22 +72,36 @@ def prepare_compute_metrics(tokenizer, eval_dataset, stage=None, fuzzy=False):
         if isinstance(preds, tuple):
             preds = preds[0]
 
-        decoded_preds = tokenizer.batch_decode(preds, skip_special_tokens=True)
+        decoded_preds = preds
+        # decoded_preds = tokenizer.batch_decode(preds, skip_special_tokens=True)
 
         preds = []
+
         for pred in decoded_preds:
             try:
-                pred = pred.split("'''")[1]
-                pred = pred.split("'''")[0]
-                preds.append(pred.strip())
+                match = None
+
+                # 1. "code": """ ... """
+                matches = re.findall(r'"code"\s*:\s*"""(.*?)"""', pred, re.DOTALL)
+                if matches:
+                    match = matches[-1]
+
+                # 2. 'code': ''' ... '''
+                if match is None:
+                    matches = re.findall(r"'code'\s*:\s*'''(.*?)'''", pred, re.DOTALL)
+                    if matches:
+                        match = matches[-1]
+
+                # 3. "code": " ... "
+                if match is None:
+                    matches = re.findall(r'"code"\s*:\s*"([^"]*?)"', pred, re.DOTALL)
+                    if matches:
+                        match = matches[-1]
+
+                pred = match.strip() if match is not None else ""
             except:
-                try:
-                    pred = pred.split('"code":')[1].strip()
-                    pred = pred.split('"')[1]
-                    pred = pred.split('"')[0]
-                    preds.append(pred)
-                except:
-                    preds.append("")
+                pred = ""
+            preds.append(pred)
 
         sql_results, errors = postprocess_sql_predictions(preds, eval_dataset, fuzzy)
 

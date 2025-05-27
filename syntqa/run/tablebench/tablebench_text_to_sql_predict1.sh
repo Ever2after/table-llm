@@ -1,12 +1,15 @@
 export CUDA_VISIBLE_DEVICES=0
 
-# model_name="t5-large"
-model_name="Qwen/Qwen2.5-Coder-14B-Instruct"
+
+model_name="google/gemma-2-2b-it"
+# model_name="Qwen/Qwen2.5-3B-Instruct"
+# model_name="meta-llama/Llama-3.2-3B-Instruct"
 dataset_name="tablebench"
 output_dir="output/tablebench_text_to_sql1"
 checkpoint=4600
 
-python ./run2.py \
+
+python ./run_gpt.py \
   --task text_to_sql \
   --do_predict \
   --squall_plus True \
@@ -19,10 +22,10 @@ python ./run2.py \
   --val_max_target_length 2048 \
   --per_device_eval_batch_size 1 \
   --dataset_name ${dataset_name} \
-  --split_id 2 \
+  --split_id 10 \
   --predict_with_generate \
   --num_beams 1 \
-  --max_predict_samples 10000 \
+  --max_predict_samples 1000 \
 
   # --input_noise 9
   

@@ -1,12 +1,9 @@
 export CUDA_VISIBLE_DEVICES=0
 
-export HF_HOME=/mnt/data/jusang/.cache/huggingface
-export HF_TOKEN=
-
 # model_name="google/gemma-2-2b-it"
 # model_name="Qwen/Qwen2.5-7B-Instruct"
 model_name="meta-llama/Llama-3.2-3B-Instruct"
-dataset_name="tabmwp"
+dataset_name="tabfact"
 output_dir="output/tabfact_text_to_sql1"
 checkpoint=4600
 
@@ -26,7 +23,7 @@ python ./run_vllm.py \
   --split_id 1 \
   --predict_with_generate \
   --num_beams 1 \
-  --max_predict_samples 10
+  --max_predict_samples 100000
 
 
   # --input_noise 9

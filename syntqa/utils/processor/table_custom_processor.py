@@ -5,7 +5,7 @@ from typing import Dict, List
 from .table_custom_linearize import TableLinearize
 from .table_custom_truncate import TableTruncate
 
-with open("prompts/text2sql_prompt_2.txt", "r") as f:
+with open("prompts/text2sql_prompt.txt", "r") as f:
     text2sql_prompt = f.read()
 
 class TableProcessor(object):
@@ -46,7 +46,7 @@ class TableProcessor(object):
             if tabfact: 
                 input += '''\nLet's think step by step to verify the statement, and then give the final answer. Ensure the final answer format is only "Final Answer: yes/no" form, no other form. And ensure the final answer is only a Yes or No, without any explanation'''
             else:
-                input += '''\nLet's think step by step, and then give the final answer. Ensure the final answer format is only "Final Answer: AnswerName1, AnswerName2..." form, no other form. And ensure the final answer is a number or entity names, as short as possible, without any explanation.'''
+                input += '''\nLet's think step by step, and then give the final answer. Ensure the final answer format is only "Final Answer: Answer" form, no other form. And ensure the final answer is a number or entity names, as short as possible, without any explanation.'''
         text = self.tokenizer.apply_chat_template(
             [{"role": "user", "content": input}],
             tokenize=False,

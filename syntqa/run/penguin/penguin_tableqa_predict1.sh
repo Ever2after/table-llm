@@ -1,12 +1,13 @@
 export CUDA_VISIBLE_DEVICES=0
 
-# model_name="neulab/omnitab-large"
-model_name="Qwen/Qwen2.5-Coder-14B-Instruct"
+# model_name="google/gemma-2-2b-it"
+# model_name="Qwen/Qwen2.5-7B-Instruct"
+model_name="meta-llama/Llama-3.2-3B-Instruct"
 dataset_name="penguin"
 output_dir="output/penguin_tableqa1"
 checkpoint=4050
 
-python ./run2.py \
+python ./run_vllm.py \
   --task tableqa \
   --do_predict \
   --squall_plus True \

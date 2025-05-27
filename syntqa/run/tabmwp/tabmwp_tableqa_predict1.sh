@@ -1,8 +1,5 @@
 export CUDA_VISIBLE_DEVICES=0
 
-export HF_HOME=/mnt/data/jusang/.cache/huggingface
-export HF_TOKEN=
-
 # model_name="google/gemma-2-2b-it"
 # model_name="Qwen/Qwen2.5-7B-Instruct"
 model_name="meta-llama/Llama-3.2-3B-Instruct"

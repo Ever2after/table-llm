@@ -176,10 +176,12 @@ def main():
     model = LLM(
         model=model_path,
         tokenizer=model_path,
-        tokenizer_mode="auto",  # uses HuggingFace tokenizer
-        dtype="bfloat16",        # or "bfloat16", depending on your GPU setup
-        trust_remote_code=True, # needed for some custom models
+        tokenizer_mode="auto",
+        dtype="bfloat16",       
+        trust_remote_code=True, 
         download_dir=model_args.cache_dir,
+        gpu_memory_utilization=0.9,
+        max_model_len=8192
     )
     
     sampling_params = SamplingParams(
@@ -295,12 +297,9 @@ def main():
             log_probs_mean.append(0)
             log_probs_sum.append(0)
 
-        # 5. Label도 pad_token으로 맞춰줌
         tmp = predict_dataset["labels"]
-        # label_ids = [item + [tokenizer.pad_token_id]*(data_args.val_max_target_length-len(item)) for item in tmp]
         label_ids = [item for item in tmp]
         
-        # 6. 결과 평가
         eval_preds = EvalPrediction(predictions=predictions, label_ids=label_ids)
         
         acc = compute_metrics(eval_preds, {'log_probs_sum': log_probs_sum, 'log_probs_mean': log_probs_mean}, vllm=True)
