@@ -81,21 +81,19 @@ class TableAgent:
         if isinstance(self.model, Model):
             if prompt_length <= 3328:
                 text, response = self.model.query(
-                    # prompt=f'<｜begin▁of▁sentence｜>User: {self.prompt} Assistant:',
                     prompt=self.prompt,
                     temperature=self.temperature if temperature is None else temperature,
                     top_p=self.top_p,
-                    max_new_tokens= 4000 - prompt_length,
+                    max_tokens= 4000 - prompt_length,
                     # stop_token_ids=self.stop_tokens,
                 )
             elif prompt_length <= 14592:
                 print(f"Prompt length -- {prompt_length} is too long, we use the 16k version.")
                 text, response = self.long_model.query(
-                    # prompt=f'<｜begin▁of▁sentence｜>User: {self.prompt} Assistant:',
                     prompt=self.prompt,
                     temperature=self.temperature if temperature is None else temperature,
                     top_p=self.top_p,
-                    max_new_tokens= 15360 - prompt_length,
+                    max_tokens= 15360 - prompt_length,
                     # stop_token_ids=self.stop_tokens,
                 )
             else:

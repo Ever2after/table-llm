@@ -1,7 +1,6 @@
 from collections import Counter
 from utils.eval import eval_ex_match, extract_answer
-from utils.custom_eval import check_match
-from utils.custom_eval2 import check_exact_match
+from utils.custom_eval import check_exact_match
 import random
 import json
 import numpy as np

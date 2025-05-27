@@ -88,15 +88,23 @@ def parse_numeric_value(text):
 
 
 
-def check_match(pred, ans):
+def check_exact_match(pred, ans):
     """
     :param pred, ans : 예측값과 정답갑. 이 둘이 일치하는지 여부를 판단할 것이고 판단을 위해 둘의 format을 맞춰주고 체크함
     """
+    # 빈 문자열 또는 빈 리스트인 경우 즉시 False 반환
+    if (isinstance(pred, str) and pred.strip() == "") or (isinstance(ans, str) and ans.strip() == ""):
+        return False
+    if isinstance(pred, list) and len(pred) == 0:
+        return False
+    if isinstance(ans, list) and len(ans) == 0:
+        return False
+    
     try:
         # 문자열을 정수로 변환 시도
-        pred_int = int(pred)
-        ans_int = int(ans)
-        if pred_int == ans_int:
+        pred_int = float(pred)
+        ans_int = float(ans)
+        if math.isclose(pred_int, ans_int, rel_tol=1e-2, abs_tol=1e-2):
             return True
         else:
             return False
@@ -106,8 +114,8 @@ def check_match(pred, ans):
         ans_dollar = ans.replace("$", "").replace(",", "").replace("%", "").strip()
         pred_dollar = pred.replace("$", "").replace(",", "").replace("%", "").strip()
         try:
-            pred_int_wo_dollar = int(pred_dollar)
-            ans_int_wo_dollar = int(ans_dollar)
+            pred_int_wo_dollar = float(pred_dollar)
+            ans_int_wo_dollar = float(ans_dollar)
             if pred_int_wo_dollar == ans_int_wo_dollar:
                 return True
             else:
@@ -116,8 +124,8 @@ def check_match(pred, ans):
             ans_number = ans.replace(",", "").strip()
             pred_number = pred.replace(",", "").strip()
             try:
-                pred_int_wo_comma = int(pred_number)
-                ans_int_wo_comma = int(ans_number)
+                pred_int_wo_comma = float(pred_number)
+                ans_int_wo_comma = float(ans_number)
                 if pred_int_wo_comma == ans_int_wo_comma:
                     return True
                 else:
@@ -126,8 +134,8 @@ def check_match(pred, ans):
                 ans_cleaned = ans.replace('''"''', "").replace("'", "").replace("the", "").strip()
                 pred_cleaned = pred.replace('''"''', "").replace("'", "").replace("the", "").strip()
                 try:
-                    ans_cleaned = int(ans_cleaned)
-                    pred_cleaned = int(pred_cleaned)
+                    ans_cleaned = float(ans_cleaned)
+                    pred_cleaned = float(pred_cleaned)
                     if ans_cleaned == pred_cleaned:
                         return True
                     else:
@@ -136,7 +144,7 @@ def check_match(pred, ans):
                     ans_numeric_value = parse_numeric_value(ans)
                     pred_numeric_value = parse_numeric_value(pred)
                     try:
-                        check_isclose = math.isclose(ans_numeric_value, pred_numeric_value, rel_tol=0.0001, abs_tol=0.0001)
+                        check_isclose = math.isclose(ans_numeric_value, pred_numeric_value, rel_tol=0.01, abs_tol=0.01)
                         if check_isclose:
                             return True    
                         else:

@@ -1,4 +1,47 @@
-# TableLLM Repository
+# TableLLM (Custom)
+## Installation
+```bash
+conda create -n tablellm python=3.10
+conda activate tablellm
+pip install -r requirements.txt
+```
+
+### OpenAI API KEY Setting (Optional)
+```bash
+export OPENAI_API_KEY='...'
+```
+
+## Inference
+### DP
+```bash
+all_dp_general.sh
+```
+### PyAgent
+```bash
+all_pyagent_general.sh
+```
+
+## Evaluation
+See `examples/evaluate.py`
+
+## Added / Modified Files
+```
+.
+├── run_cot_general.py
+├── run_agnet_general.py
+│ 
+├── dataset/
+│    └── {dataset}.py
+│ 
+├── agent/
+│    └── model.py
+│  
+└── scripts/
+     ├── all_dp_general.sh
+     └── all_pyagent_general.sh
+```
+
+# TableLLM Repository (Original)
 
 Official implementation of the paper "Rethinking Tabular Data Understanding with Large Language Models" ([https://arxiv.org/abs/2312.16702](https://arxiv.org/abs/2312.16702)).
 

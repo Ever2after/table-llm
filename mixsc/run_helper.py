@@ -78,10 +78,10 @@ def query(model, long_model, prompt, temperature, self_consistency):
 
     if isinstance(model, Model):
         if prompt_length <= 3328:
-            return model.query(prompt=prompt, temperature=temperature, max_new_tokens=4000 - prompt_length, n=self_consistency)
+            return model.query(prompt=prompt, temperature=temperature, max_tokens=4000 - prompt_length, n=self_consistency)
         elif prompt_length <= 14592:
             print(f"Prompt length -- {prompt_length} is too long, we use the 16k version.")
-            return long_model.query(prompt=prompt, temperature=temperature, max_new_tokens=15360 - prompt_length, n=self_consistency)
+            return long_model.query(prompt=prompt, temperature=temperature, max_tokens=15360 - prompt_length, n=self_consistency)
         else:
             if self_consistency == 1:
                 return f"Prompt length -- {prompt_length} is too long", {prompt_length: prompt_length}
@@ -90,7 +90,7 @@ def query(model, long_model, prompt, temperature, self_consistency):
     else:
         # no short version of the model provided, which means we use the long version for all prompts
         if prompt_length <= 14592:
-            return long_model.query(prompt=prompt, temperature=temperature, max_new_tokens=15360 - prompt_length, n=self_consistency)
+            return long_model.query(prompt=prompt, temperature=temperature, max_tokens=15360 - prompt_length, n=self_consistency)
         else:
             if self_consistency == 1:
                 return f"Prompt length -- {prompt_length} is too long", {prompt_length: prompt_length}

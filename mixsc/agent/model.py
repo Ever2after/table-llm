@@ -10,7 +10,7 @@ import torch
 class Model:
     def __init__(self, model_name: str, provider: str = 'openai'):
         self.model_name = model_name
-        self.provider = provider  # 'openai' or 'huggingface'
+        self.provider = provider
         if provider == 'huggingface':
             self.tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
             self.model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=True, torch_dtype=torch.bfloat16).cuda()

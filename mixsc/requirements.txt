@@ -9,8 +9,3 @@ tqdm
 transformers
 timeout-decorator
 tabulate
-# unicodedata
-# re
-# ast
-# csv
-# dateutil
